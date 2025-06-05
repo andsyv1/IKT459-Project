@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from Dataloader import HumidityDataset
 
-# ---------- Residual Block ----------
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResidualBlock, self).__init__()
@@ -36,7 +35,6 @@ class ResidualBlock(nn.Module):
         output = torch.add(x, residual)
         return nn.ReLU()(output)
 
-# ---------- Main Model ----------
 class HumidityCNN(nn.Module):
     def __init__(self, num_classes):
         super(HumidityCNN, self).__init__()
@@ -86,7 +84,6 @@ class HumidityCNN(nn.Module):
         x = self.fc3(x)
         return x
 
-# ---------- Parameters ----------
 DATA_DIR = "./Dataset"
 CATEGORIES = [
     "1.1 Water bottel whit cold water", "1.2 Water bottel whit rests of cold water", "1.3 Water bottel whit no water",
@@ -102,13 +99,11 @@ BATCH_SIZE = 184
 EPOCHS = 100
 LEARNING_RATE = 0.0001
 
-# ---------- Transforms ----------
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-# ---------- Data ----------
 dataset = HumidityDataset(DATA_DIR, CATEGORIES, transform=transform)
 val_size = int(0.1 * len(dataset))
 test_size = int(0.1 * len(dataset))
@@ -120,22 +115,22 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, nu
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True)
 
-# ---------- Model Setup ----------
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = HumidityCNN(num_classes=len(CATEGORIES)).to(device)
 
-# ---------- Info ----------
+
 total_params = sum(p.numel() for p in model.parameters())
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print(f"Total Parameters: {total_params}")
 print(f"Trainable Parameters: {trainable_params}")
 
-# ---------- Loss / Optimizer ----------
+
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
 
-# ---------- Training Loop ----------
+
 loss_history = []
 train_acc_history = []
 val_acc_history = []
@@ -163,7 +158,6 @@ for epoch in range(EPOCHS):
     epoch_loss = running_loss / len(train_loader)
     epoch_train_acc = metrics.accuracy_score(train_labels, train_preds)
 
-    # ---------- Validation ----------
     model.eval()
     val_preds, val_labels = [], []
     with torch.no_grad():
@@ -182,10 +176,9 @@ for epoch in range(EPOCHS):
     print(f"Epoch {epoch+1}/{EPOCHS}, Loss: {epoch_loss:.4f}, Train Acc: {epoch_train_acc:.4f}, Val Acc: {epoch_val_acc:.4f}")
 
 torch.save(model.state_dict(), "humidity_model.pth")
-print("✅ Model saved as humidity_model.pth")
+print("Model saved as humidity_model.pth")
 
 
-# ---------- Final Validation Report ----------
 val_conf_matrix = metrics.confusion_matrix(val_labels, val_preds)
 val_accuracy = metrics.accuracy_score(val_labels, val_preds)
 val_report = metrics.classification_report(val_labels, val_preds, target_names=CATEGORIES)
@@ -200,7 +193,6 @@ plt.tight_layout()
 plt.savefig("Confusion_matrix_val.jpg")
 plt.show()
 
-# ---------- Plot training curves ----------
 plt.figure(figsize=(10, 6))
 epochs_range = range(1, EPOCHS + 1)
 plt.plot(epochs_range, loss_history, label='Loss')
@@ -215,7 +207,6 @@ plt.tight_layout()
 plt.savefig("loss_accuracy_plot.jpg")
 plt.show()
 
-# ---------- Test Evaluation ----------
 model.eval()
 test_preds, test_labels = [], []
 with torch.no_grad():
@@ -230,7 +221,7 @@ test_accuracy = metrics.accuracy_score(test_labels, test_preds)
 test_conf_matrix = metrics.confusion_matrix(test_labels, test_preds)
 test_report = metrics.classification_report(test_labels, test_preds, target_names=CATEGORIES)
 
-print(f"\n✅ Final Test Accuracy: {test_accuracy:.4f}")
+print(f"\n Final Test Accuracy: {test_accuracy:.4f}")
 print("Test Classification Report:")
 print(test_report)
 
